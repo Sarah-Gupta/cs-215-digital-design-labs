@@ -1,4 +1,4 @@
-// CS-215 LAB01 Task 1 Testbench
+// CS-215 Lab 01 Task 1: AND Gate Testbench
 `timescale 1ns/1ps
 
 module tb;
@@ -6,7 +6,7 @@ module tb;
   reg b;
   wire y;
 
-  // Instantiate DUT
+  // Instantiate Design Under Test
   dut uut (
     .a(a),
     .b(b),
@@ -14,15 +14,36 @@ module tb;
   );
 
   initial begin
-    $display("Starting testbench for Task 1...");
-    
-    // Test Case 1
+    $display("Starting AND gate testbench...");
+
+    // Test case 1
     a = 1'b0; b = 1'b0; #10;
-    
-    // Test Case 2
+    if (y !== 1'b0) begin
+      $display("❌ ERROR: Input (a=0, b=0) expected output y=0, but got y=%b", y);
+      $finish;
+    end
+
+    // Test case 2
+    a = 1'b0; b = 1'b1; #10;
+    if (y !== 1'b0) begin
+      $display("❌ ERROR: Input (a=0, b=1) expected output y=0, but got y=%b", y);
+      $finish;
+    end
+
+    // Test case 3
+    a = 1'b1; b = 1'b0; #10;
+    if (y !== 1'b0) begin
+      $display("❌ ERROR: Input (a=1, b=0) expected output y=0, but got y=%b", y);
+      $finish;
+    end
+
+    // Test case 4
     a = 1'b1; b = 1'b1; #10;
-    
-    // Output success message for autograder
+    if (y !== 1'b1) begin
+      $display("❌ ERROR: Input (a=1, b=1) expected output y=1, but got y=%b", y);
+      $finish;
+    end
+
     $display("All test cases PASSED.");
     $finish;
   end

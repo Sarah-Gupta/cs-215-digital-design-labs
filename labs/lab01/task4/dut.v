@@ -1,4 +1,4 @@
-// CS-215 LAB01 TASK4 Design File
+// CS-215 Lab 01 Task 4: XOR Gate Template
 `timescale 1ns/1ps
 
 module dut (
@@ -6,7 +6,8 @@ module dut (
   input  wire b,
   output wire y
 );
-  // Placeholder logic (AND gate)
-  assign y = a & b;
 
+  // TODO: Implement XOR gate
+  // Hint: Use continuous assignment (assign) with the Boolean XOR operator (^)
+  
 endmodule

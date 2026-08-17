@@ -1,12 +1,12 @@
-// CS-215 LAB01 TASK3 Design File
+// CS-215 Lab 01 Task 3: NOT Gate Template
 `timescale 1ns/1ps
 
 module dut (
   input  wire a,
-  input  wire b,
   output wire y
 );
-  // Placeholder logic (AND gate)
-  assign y = a & b;
 
+  // TODO: Implement NOT gate
+  // Hint: Use continuous assignment (assign) with the Boolean NOT operator (~)
+  
 endmodule
