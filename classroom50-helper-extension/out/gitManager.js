@@ -209,11 +209,28 @@ class GitManager {
         const workspaceDir = repo.rootUri.fsPath;
         const configExists = fs.existsSync(path.join(workspaceDir, '.classroom50.yaml'));
         const hasGhStudent = await this.isGhStudentInstalled(workspaceDir);
+        // Check for SpecStory Copilot Chat history
+        const specstoryPath = path.join(workspaceDir, '.specstory');
+        let specstoryExists = false;
+        try {
+            specstoryExists = fs.existsSync(specstoryPath) && fs.readdirSync(specstoryPath).length > 0;
+        }
+        catch {
+            specstoryExists = false;
+        }
+        if (specstoryExists) {
+            vscode.window.showInformationMessage('Copilot chat history (.specstory) detected and will be included in the submission.');
+        }
+        else {
+            vscode.window.showWarningMessage('No Copilot chat history found under .specstory/. Submitting design files only.');
+        }
         // Standard Classroom 50 submission flow
         if (configExists && hasGhStudent) {
             await vscode.window.withProgress({
                 location: vscode.ProgressLocation.Notification,
-                title: `Submitting via Classroom 50...`,
+                title: specstoryExists
+                    ? `Submitting via Classroom 50 (including Copilot history)...`
+                    : `Submitting via Classroom 50...`,
                 cancellable: false
             }, async (progress) => {
                 try {
@@ -244,13 +261,18 @@ class GitManager {
         const commitMessage = `${labName} ${taskName}`;
         await vscode.window.withProgress({
             location: vscode.ProgressLocation.Notification,
-            title: `Submitting ${labName} ${taskName} (Manual Fallback)...`,
+            title: specstoryExists
+                ? `Submitting ${labName} ${taskName} (Manual Fallback - including Copilot history)...`
+                : `Submitting ${labName} ${taskName} (Manual Fallback)...`,
             cancellable: false
         }, async (progress) => {
             try {
                 progress.report({ message: "Staging files..." });
                 const stagePath = taskRelativePath.replace(/\\/g, '/');
                 await this.runGitCommand(workspaceDir, `add "${stagePath}"`);
+                if (specstoryExists) {
+                    await this.runGitCommand(workspaceDir, 'add .specstory');
+                }
                 // Check if there are staged changes to commit
                 const status = await this.runGitCommand(workspaceDir, `status --porcelain`);
                 const hasStagedChanges = status.split('\n').some(line => {
