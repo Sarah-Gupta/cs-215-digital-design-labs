@@ -145,23 +145,47 @@ export class GitManager {
                 progress.report({ message: "Fetching latest templates..." });
                 await this.runGitCommand(workspaceDir, 'fetch upstream');
 
-                // Merge template updates into current branch
-                progress.report({ message: "Merging updates..." });
-                try {
-                    const branchName = classroomConfig?.source?.branch || 'main';
-                    await this.runGitCommand(workspaceDir, `merge upstream/${branchName} --allow-unrelated-histories --no-edit`);
-                    vscode.window.showInformationMessage('Successfully synced with central template repository!');
-                } catch (mergeError: any) {
-                    // Handle conflicts
-                    vscode.window.showWarningMessage(
-                        'Merge conflict detected while syncing templates. Please check the source control tab to resolve conflicts.',
-                        'View Conflicts'
-                    ).then(selection => {
-                        if (selection === 'View Conflicts') {
-                            vscode.commands.executeCommand('workbench.view.scm');
+                // 1. Scan and backup student files
+                progress.report({ message: "Backing up your files..." });
+                const statusOutput = await this.runGitCommand(workspaceDir, 'status --porcelain');
+                const backup: Map<string, string> = new Map();
+
+                if (statusOutput) {
+                    const lines = statusOutput.split('\n');
+                    for (const line of lines) {
+                        if (line.length < 4) { continue; }
+                        const relPath = line.slice(3).trim();
+                        // Match only student design/testbench files in task directories (e.g. labs/lab01/task1/dut.v)
+                        if (relPath.match(/^labs\/lab\d{2}\/task\d\/[^\/]+\.v$/)) {
+                            const fullPath = path.join(workspaceDir, relPath);
+                            if (fs.existsSync(fullPath)) {
+                                backup.set(relPath, fs.readFileSync(fullPath, 'utf8'));
+                            }
                         }
-                    });
+                    }
                 }
+
+                // 2. Discard uncommitted changes in tracked files to prepare for a clean merge
+                progress.report({ message: "Cleaning workspace..." });
+                await this.runGitCommand(workspaceDir, 'reset --hard');
+                await this.runGitCommand(workspaceDir, 'clean -fd');
+
+                // 3. Merge template updates into current branch (conflicts automatically resolved in favor of the template)
+                progress.report({ message: "Merging latest templates..." });
+                const branchName = classroomConfig?.source?.branch || 'main';
+                await this.runGitCommand(workspaceDir, `merge upstream/${branchName} -X theirs --no-edit`);
+
+                // 4. Restore student files from memory backup
+                if (backup.size > 0) {
+                    progress.report({ message: "Restoring your files..." });
+                    for (const [relPath, content] of backup.entries()) {
+                        const fullPath = path.join(workspaceDir, relPath);
+                        fs.mkdirSync(path.dirname(fullPath), { recursive: true });
+                        fs.writeFileSync(fullPath, content, 'utf8');
+                    }
+                }
+
+                vscode.window.showInformationMessage('Successfully synced with central template repository with zero conflicts!');
             } catch (err: any) {
                 vscode.window.showErrorMessage(`Sync failed: ${err.message || err}`);
             }
