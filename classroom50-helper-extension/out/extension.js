@@ -79,7 +79,16 @@ function activate(context) {
             labTreeProvider.refresh();
         }
     });
-    context.subscriptions.push(syncCommand, runCommand, submitCommand);
+    // 5. Register View Waveform command
+    const viewWaveformCommand = vscode.commands.registerCommand('classroom50.viewWaveform', async (item) => {
+        if (item && item.contextValue === 'task') {
+            await codeRunner_1.CodeRunner.viewWaveform(item.parentLab, item.label);
+        }
+        else {
+            await codeRunner_1.CodeRunner.viewWaveform();
+        }
+    });
+    context.subscriptions.push(syncCommand, runCommand, submitCommand, viewWaveformCommand);
 }
 exports.activate = activate;
 function deactivate() { }

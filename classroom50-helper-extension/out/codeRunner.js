@@ -107,6 +107,71 @@ class CodeRunner {
         const runCmd = `./scripts/run.sh ${activeLab} ${activeTask} ${selectedTb}`;
         terminal.sendText(`${compileCmd} && ${runCmd}`);
     }
+    static async viewWaveform(labName, taskName) {
+        let activeLab = labName;
+        let activeTask = taskName;
+        // Auto-detect if not provided
+        if (!activeLab || !activeTask) {
+            const activeEditor = vscode.window.activeTextEditor;
+            if (activeEditor) {
+                const filePath = activeEditor.document.uri.fsPath;
+                const relativePath = vscode.workspace.asRelativePath(filePath);
+                const pathParts = relativePath.split(/[\\/]/);
+                if (pathParts[0] === 'labs' && pathParts[1] && pathParts[2]) {
+                    activeLab = pathParts[1];
+                    activeTask = pathParts[2];
+                }
+            }
+        }
+        if (!activeLab || !activeTask) {
+            vscode.window.showWarningMessage('Please open a Verilog design file inside a task folder or select a task from the sidebar.');
+            return;
+        }
+        const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+        if (!workspaceFolder) {
+            vscode.window.showErrorMessage('No workspace folder open.');
+            return;
+        }
+        const artefactsLabDir = path.join(workspaceFolder.uri.fsPath, 'artefacts', activeLab);
+        if (!fs.existsSync(artefactsLabDir)) {
+            const runOption = await vscode.window.showWarningMessage(`No waveforms found for ${activeLab} ${activeTask}. Would you like to run the simulation first?`, 'Run Simulation');
+            if (runOption === 'Run Simulation') {
+                this.runCode(activeLab, activeTask);
+            }
+            return;
+        }
+        // Find VCD files matching activeTask_*
+        let vcdFiles = [];
+        try {
+            vcdFiles = fs.readdirSync(artefactsLabDir).filter(file => file.startsWith(`${activeTask}_`) && file.endsWith('.vcd'));
+        }
+        catch (err) {
+            vscode.window.showErrorMessage(`Failed to read waveforms: ${err.message}`);
+            return;
+        }
+        if (vcdFiles.length === 0) {
+            const runOption = await vscode.window.showWarningMessage(`No waveform (.vcd) file found for ${activeLab} ${activeTask}. Please run the simulation first.`, 'Run Simulation');
+            if (runOption === 'Run Simulation') {
+                this.runCode(activeLab, activeTask);
+            }
+            return;
+        }
+        let selectedVcd;
+        if (vcdFiles.length === 1) {
+            selectedVcd = vcdFiles[0];
+        }
+        else {
+            selectedVcd = await vscode.window.showQuickPick(vcdFiles, {
+                placeHolder: `Select waveform file to open:`,
+                ignoreFocusOut: true
+            });
+        }
+        if (!selectedVcd) {
+            return;
+        }
+        const vcdFilePath = path.join(artefactsLabDir, selectedVcd);
+        vscode.commands.executeCommand('vscode.open', vscode.Uri.file(vcdFilePath));
+    }
 }
 exports.CodeRunner = CodeRunner;
 CodeRunner.terminal = null;

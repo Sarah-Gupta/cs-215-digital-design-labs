@@ -45,6 +45,11 @@
         "command": "classroom50.submit",
         "title": "Submit Task",
         "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "classroom50.viewWaveform",
+        "title": "View Waveform",
+        "icon": "$(pulse)"
       }
     ],
     "menus": {
@@ -62,9 +67,14 @@
           "group": "inline@1"
         },
         {
-          "command": "classroom50.submit",
+          "command": "classroom50.viewWaveform",
           "when": "view == classroom50-navigator && viewItem == task",
           "group": "inline@2"
+        },
+        {
+          "command": "classroom50.submit",
+          "when": "view == classroom50-navigator && viewItem == task",
+          "group": "inline@3"
         }
       ]
     },
