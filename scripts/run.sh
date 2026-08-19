@@ -12,8 +12,9 @@ if [ -z "$LAB" ] || [ -z "$TASK" ] || [ -z "$TB" ]; then
 fi
 
 ARTEFACT_DIR="artefacts/${LAB}"
-SIM_FILE="${ARTEFACT_DIR}/${TASK}_${TB%.v}.sim"
-VCD_FILE="${ARTEFACT_DIR}/${TASK}_${TB%.v}.vcd"
+TB_BASE=$(basename "$TB")
+SIM_FILE="${ARTEFACT_DIR}/${TASK}_${TB_BASE%.v}.sim"
+VCD_FILE="${ARTEFACT_DIR}/${TASK}_${TB_BASE%.v}.vcd"
 
 if [ ! -f "$SIM_FILE" ]; then
   echo "Error: simulation binary not found:"

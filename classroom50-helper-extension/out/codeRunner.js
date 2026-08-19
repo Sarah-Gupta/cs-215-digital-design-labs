@@ -65,46 +65,18 @@ class CodeRunner {
             vscode.window.showErrorMessage('No workspace folder open.');
             return;
         }
-        // Locate testbench folder: labs/<lab>/tb/
-        const tbFolderPath = path.join(workspaceFolder.uri.fsPath, 'labs', activeLab, 'tb');
-        if (!fs.existsSync(tbFolderPath)) {
-            vscode.window.showErrorMessage(`Testbench folder not found at: ${tbFolderPath}`);
-            return;
-        }
-        // Read all testbench files
-        let testbenches = [];
-        try {
-            testbenches = fs.readdirSync(tbFolderPath).filter(file => file.endsWith('.v') || file.endsWith('.sv'));
-        }
-        catch (err) {
-            vscode.window.showErrorMessage(`Failed to read testbenches: ${err.message}`);
-            return;
-        }
-        if (testbenches.length === 0) {
-            vscode.window.showErrorMessage(`No testbenches (*.v) found in: ${tbFolderPath}`);
-            return;
-        }
-        // If there is only one testbench, run it automatically. Otherwise, ask the user.
-        let selectedTb;
-        if (testbenches.length === 1) {
-            selectedTb = testbenches[0];
-        }
-        else {
-            selectedTb = await vscode.window.showQuickPick(testbenches, {
-                placeHolder: `Select testbench to verify ${activeLab} ${activeTask}:`,
-                ignoreFocusOut: true
-            });
-        }
-        if (!selectedTb) {
-            vscode.window.showWarningMessage('Run canceled: No testbench selected.');
+        // Locate the student testbench inside the task folder: labs/<lab>/<task>/tb.v
+        const tbFilePath = path.join('labs', activeLab, activeTask, 'tb.v');
+        const tbFullPath = path.join(workspaceFolder.uri.fsPath, tbFilePath);
+        if (!fs.existsSync(tbFullPath)) {
+            vscode.window.showErrorMessage(`Student testbench not found at: ${tbFilePath}`);
             return;
         }
         const terminal = this.getTerminal();
         terminal.show();
-        // Under the hood commands for compilation and execution
-        // We use unix-like paths since VS Code online codespaces run on Linux containers
-        const compileCmd = `./scripts/compile.sh ${activeLab} ${activeTask} ${selectedTb}`;
-        const runCmd = `./scripts/run.sh ${activeLab} ${activeTask} ${selectedTb}`;
+        // Under the hood commands for compilation and execution using unix-like relative paths
+        const compileCmd = `./scripts/compile.sh ${activeLab} ${activeTask} labs/${activeLab}/${activeTask}/tb.v`;
+        const runCmd = `./scripts/run.sh ${activeLab} ${activeTask} labs/${activeLab}/${activeTask}/tb.v`;
         terminal.sendText(`${compileCmd} && ${runCmd}`);
     }
     static async viewWaveform(labName, taskName) {
@@ -133,43 +105,15 @@ class CodeRunner {
             return;
         }
         const artefactsLabDir = path.join(workspaceFolder.uri.fsPath, 'artefacts', activeLab);
-        if (!fs.existsSync(artefactsLabDir)) {
-            const runOption = await vscode.window.showWarningMessage(`No waveforms found for ${activeLab} ${activeTask}. Would you like to run the simulation first?`, 'Run Simulation');
-            if (runOption === 'Run Simulation') {
-                this.runCode(activeLab, activeTask);
-            }
-            return;
-        }
-        // Find VCD files matching activeTask_*
-        let vcdFiles = [];
-        try {
-            vcdFiles = fs.readdirSync(artefactsLabDir).filter(file => file.startsWith(`${activeTask}_`) && file.endsWith('.vcd'));
-        }
-        catch (err) {
-            vscode.window.showErrorMessage(`Failed to read waveforms: ${err.message}`);
-            return;
-        }
-        if (vcdFiles.length === 0) {
+        const vcdFileName = `${activeTask}_tb.vcd`;
+        const vcdFilePath = path.join(artefactsLabDir, vcdFileName);
+        if (!fs.existsSync(vcdFilePath)) {
             const runOption = await vscode.window.showWarningMessage(`No waveform (.vcd) file found for ${activeLab} ${activeTask}. Please run the simulation first.`, 'Run Simulation');
             if (runOption === 'Run Simulation') {
                 this.runCode(activeLab, activeTask);
             }
             return;
         }
-        let selectedVcd;
-        if (vcdFiles.length === 1) {
-            selectedVcd = vcdFiles[0];
-        }
-        else {
-            selectedVcd = await vscode.window.showQuickPick(vcdFiles, {
-                placeHolder: `Select waveform file to open:`,
-                ignoreFocusOut: true
-            });
-        }
-        if (!selectedVcd) {
-            return;
-        }
-        const vcdFilePath = path.join(artefactsLabDir, selectedVcd);
         vscode.commands.executeCommand('vscode.open', vscode.Uri.file(vcdFilePath));
     }
 }

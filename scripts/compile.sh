@@ -12,7 +12,7 @@ fi
 
 LAB_DIR="labs/${LAB}"
 TASK_DIR="${LAB_DIR}/${TASK}"
-TB_FILE="${LAB_DIR}/tb/${TB}"
+TB_FILE="$TB"
 DUT_FILE="${TASK_DIR}/dut.v"
 ARTEFACT_DIR="artefacts/${LAB}"
 
@@ -20,11 +20,12 @@ ARTEFACT_DIR="artefacts/${LAB}"
 [ -d "$LAB_DIR" ] || { echo "Error: lab not found"; exit 1; }
 [ -d "$TASK_DIR" ] || { echo "Error: task not found"; exit 1; }
 [ -f "$DUT_FILE" ] || { echo "Error: dut.v not found"; exit 1; }
-[ -f "$TB_FILE" ] || { echo "Error: testbench not found"; exit 1; }
+[ -f "$TB_FILE" ] || { echo "Error: testbench not found: $TB_FILE"; exit 1; }
 
 mkdir -p "$ARTEFACT_DIR"
 
-OUT_SIM="${ARTEFACT_DIR}/${TASK}_${TB%.v}.sim"
+TB_BASE=$(basename "$TB")
+OUT_SIM="${ARTEFACT_DIR}/${TASK}_${TB_BASE%.v}.sim"
 
 # Collect Verilog files from task directory
 TASK_FILES=()
