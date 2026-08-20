@@ -184,7 +184,7 @@ class GitManager {
                 // 3. Merge template updates into current branch (conflicts automatically resolved in favor of the template)
                 progress.report({ message: "Merging latest templates..." });
                 const branchName = classroomConfig?.source?.branch || 'main';
-                await this.runGitCommand(workspaceDir, `merge upstream/${branchName} -X theirs --no-edit`);
+                await this.runGitCommand(workspaceDir, `merge upstream/${branchName} -X theirs --allow-unrelated-histories --no-edit`);
                 // 4. Restore student files from memory backup
                 if (backup.size > 0) {
                     progress.report({ message: "Restoring your files..." });
