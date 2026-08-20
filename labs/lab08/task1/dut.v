@@ -6,7 +6,7 @@ module dut (
   input  wire b,
   output wire y
 );
-  // Placeholder logic (AND gate)
-  assign y = a & b;
+  // Placeholder logic (OR gate)
+  
 
 endmodule
