@@ -27,10 +27,15 @@ mkdir -p "$ARTEFACT_DIR"
 TB_BASE=$(basename "$TB")
 OUT_SIM="${ARTEFACT_DIR}/${TASK}_${TB_BASE%.v}.sim"
 
-# Collect Verilog files from task directory
+# Collect Verilog files from task directory, excluding testbenches to prevent duplication errors
 TASK_FILES=()
 for f in "$TASK_DIR"/*.v; do
-  [ -e "$f" ] && TASK_FILES+=("$f")
+  if [ -e "$f" ]; then
+    f_base=$(basename "$f")
+    if [ "$f" != "$TB_FILE" ] && [ "$f_base" != "tb.v" ]; then
+      TASK_FILES+=("$f")
+    fi
+  fi
 done
 
 # Collect shared files *only if they exist*
