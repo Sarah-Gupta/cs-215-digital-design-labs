@@ -5,9 +5,68 @@ import subprocess
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-def get_git_email():
+def is_ignored_email(email, smtp_user):
+    email_lower = email.lower()
+    smtp_user_lower = smtp_user.lower() if smtp_user else ""
+    
+    # Ignore if it matches the teacher's SMTP username/email
+    if smtp_user_lower and smtp_user_lower in email_lower:
+        return True
+        
+    # Ignore common GitHub Actions/Bot emails
+    ignored_keywords = [
+        "github-actions",
+        "action@github",
+        "noreply@github",
+        "bot@classroom50",
+        "support@github"
+    ]
+    for keyword in ignored_keywords:
+        if keyword in email_lower:
+            return True
+            
+    return False
+
+def get_recipient_email(smtp_user):
+    # 1. Try to get pusher/commit emails from GitHub event payload
+    event_path = os.environ.get("GITHUB_EVENT_PATH")
+    if event_path and os.path.exists(event_path):
+        try:
+            with open(event_path, "r") as f:
+                event = json.load(f)
+            
+            # Try to get pusher email (who pushed the code)
+            pusher_email = event.get("pusher", {}).get("email")
+            if pusher_email and "@" in pusher_email and not is_ignored_email(pusher_email, smtp_user):
+                print(f"Found pusher email in GitHub event: {pusher_email}")
+                return pusher_email
+                
+            # Try to get head commit author email
+            author_email = event.get("head_commit", {}).get("author", {}).get("email")
+            if author_email and "@" in author_email and not is_ignored_email(author_email, smtp_user):
+                print(f"Found head commit author email in GitHub event: {author_email}")
+                return author_email
+        except Exception as e:
+            print(f"Error parsing GitHub event payload: {e}")
+
+    # 2. Scan the last 10 commits in Git history to find a student email
+    try:
+        commits_output = subprocess.check_output(
+            ["git", "log", "-10", "--format=%ae"]
+        ).decode("utf-8").strip()
+        
+        emails = [email.strip() for email in commits_output.split("\n") if email.strip()]
+        for email in emails:
+            if "@" in email and not is_ignored_email(email, smtp_user):
+                print(f"Found student email in git history: {email}")
+                return email
+    except Exception as e:
+        print(f"Error scanning git history: {e}")
+
+    # 3. Ultimate Fallback: return the latest commit author (even if it is the teacher or bot)
     try:
         email = subprocess.check_output(["git", "log", "-1", "--format=%ae"]).decode("utf-8").strip()
+        print(f"Falling back to latest commit author email: {email}")
         return email
     except Exception:
         return None
@@ -37,11 +96,12 @@ def main():
         return
 
     # 3. Determine recipient email
-    recipient = get_git_email()
-    print(f"Evaluated recipient email from Git history: {recipient}")
+    recipient = get_recipient_email(smtp_user)
+    print(f"Evaluated recipient email: {recipient}")
     if not recipient or "@" not in recipient:
         print(f"Error: Invalid or missing recipient email: {recipient}")
         return
+
 
 
     # 4. Parse result data
