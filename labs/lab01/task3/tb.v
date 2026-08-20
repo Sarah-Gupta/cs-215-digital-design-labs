@@ -23,21 +23,12 @@ module tb;
   initial begin
     $display("Starting NOT gate testbench...");
 
-    // Test case 1
-    a = 1'b0; #10;
-    if (y !== 1'b1) begin
-      $display("❌ ERROR: Input a=0 expected output y=1, but got y=%b", y);
-      $finish;
-    end
-
-    // Test case 2
-    a = 1'b1; #10;
-    if (y !== 1'b0) begin
-      $display("❌ ERROR: Input a=1 expected output y=0, but got y=%b", y);
-      $finish;
-    end
-
-    $display("All test cases PASSED.");
+    // TODO: Write your test cases here
+    // Hint: Apply stimulus signal (a) and verify output (y) after a delay
+    // Example:
+    // a = 1'b0; #10;
+    // if (y !== 1'b1) $display("Error");
+    
     $finish;
   end
 
