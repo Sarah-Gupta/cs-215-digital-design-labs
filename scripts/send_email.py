@@ -38,9 +38,11 @@ def main():
 
     # 3. Determine recipient email
     recipient = get_git_email()
+    print(f"Evaluated recipient email from Git history: {recipient}")
     if not recipient or "@" not in recipient:
-        print(f"Invalid or missing recipient email: {recipient}")
+        print(f"Error: Invalid or missing recipient email: {recipient}")
         return
+
 
     # 4. Parse result data
     classroom = data.get("classroom", "Digital Design Labs")
@@ -130,14 +132,21 @@ def main():
     msg.attach(MIMEText(html, "html"))
 
     try:
-        server = smtplib.SMTP(smtp_server, int(smtp_port))
-        server.starttls()
+        port = int(smtp_port)
+        if port == 465:
+            print("Connecting to SMTP server via SSL (port 465)...")
+            server = smtplib.SMTP_SSL(smtp_server, port)
+        else:
+            print(f"Connecting to SMTP server via TLS (port {port})...")
+            server = smtplib.SMTP(smtp_server, port)
+            server.starttls()
         server.login(smtp_user, smtp_pass)
         server.sendmail(smtp_user, recipient, msg.as_string())
         server.quit()
         print(f"Successfully sent autograding result email to {recipient}")
     except Exception as e:
         print(f"Error sending email via SMTP: {e}")
+
 
 if __name__ == "__main__":
     main()
