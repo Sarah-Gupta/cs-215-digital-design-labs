@@ -1,3 +1,3 @@
 # CS-215 LAB01 – Digital Design Labs
 
-This is the lab manual and worksheet for lab01.
+This Lab is the First Lab for the course. Hope You Enjoy Verilog.
