@@ -1,9 +1,8 @@
 name: Diagnose Email Configuration
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
+
 
 jobs:
   diagnose:
