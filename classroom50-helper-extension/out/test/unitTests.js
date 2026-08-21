@@ -175,7 +175,8 @@ source:
                     assert.ok(task4, 'task4 not found in lab01');
                     console.log(`✔ Found ${tasks.length} tasks in lab01 (including ${task4?.label}).`);
                     console.log('✔ Case 2 Passed successfully!');
-                    console.log('\n🎉 All Extension Unit Tests PASSED!');
+                    // Run extra verification tests
+                    runExtraTests();
                 }
                 catch (err) {
                     console.error('❌ Case 2 (Sub-tasks) Failed:', err.message);
@@ -191,6 +192,31 @@ source:
         console.error('❌ Case 2 Error:', err);
         process.exit(1);
     });
+}
+async function runExtraTests() {
+    console.log('\nCase 3: Testing Actions URL Helper (getActionsUrl) with commit URL...');
+    try {
+        const commitUrl = 'https://github.com/BITS-Pilani-CS/csf342-labs-template/commit/1234567890abcdef';
+        const actionsUrl = await gitManager_1.GitManager.getActionsUrl(repoRoot, commitUrl);
+        assert.strictEqual(actionsUrl, 'https://github.com/BITS-Pilani-CS/csf342-labs-template/actions', 'Actions URL parsed from commit URL incorrectly');
+        console.log('✔ Case 3 Passed successfully!');
+    }
+    catch (err) {
+        console.error('❌ Case 3 Failed:', err.message);
+        process.exit(1);
+    }
+    console.log('\nCase 4: Testing Git remote origin parser in getActionsUrl (fallback mode)...');
+    try {
+        const actionsUrl = await gitManager_1.GitManager.getActionsUrl(repoRoot);
+        assert.ok(actionsUrl.startsWith('https://github.com/'), 'Resolved remote URL is invalid');
+        assert.ok(actionsUrl.endsWith('/actions'), 'Resolved actions path is invalid');
+        console.log(`✔ Case 4 Passed successfully! Resolved Actions URL: ${actionsUrl}`);
+        console.log('\n🎉 All Extension Unit Tests PASSED!');
+    }
+    catch (err) {
+        console.error('❌ Case 4 Failed:', err.message);
+        process.exit(1);
+    }
 }
 runTests();
 //# sourceMappingURL=unitTests.js.map
