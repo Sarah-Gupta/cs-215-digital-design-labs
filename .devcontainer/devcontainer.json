@@ -8,8 +8,14 @@
       "extensions": [
         "mshr-h.veriloghdl",
         "lramseyer.vaporview",
-        "SpecStory.specstory-vscode"
-      ]
+        "SpecStory.specstory-vscode",
+        "github.copilot",
+        "github.copilot-chat"
+      ],
+      "settings": {
+        "github.copilot.chat.useInstructionFiles": true,
+        "github.copilot.inlineSuggest.enable": true
+      }
     }
   },
   "remoteUser": "vscode",
