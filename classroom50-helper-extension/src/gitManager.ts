@@ -100,8 +100,8 @@ export class GitManager {
 
         // 1. Prompt for Sync Mode
         const syncMode = await vscode.window.showQuickPick([
-            { label: 'Sync Single Lab (Recommended)', description: 'Fetch/update a specific lab directory. Preserves other labs.' },
-            { label: 'Sync Entire Repository', description: 'Perform a full merge to update all templates and scripts.' }
+            { label: 'Sync Course Tooling (Non-Labs)', description: 'Fetch configurations, workflows, and helper scripts from upstream template. Preserves all lab folders.' },
+            { label: 'Sync Single Lab (Targeted)', description: 'Fetch/update a specific lab folder while preserving your design code inside it.' }
         ], {
             placeHolder: 'Select template synchronization mode:',
             ignoreFocusOut: true
@@ -110,7 +110,7 @@ export class GitManager {
         if (!syncMode) { return; }
 
         let targetLab: string | undefined;
-        if (syncMode.label === 'Sync Single Lab (Recommended)') {
+        if (syncMode.label === 'Sync Single Lab (Targeted)') {
             // Show list of labs (Lab 01 to Lab 10)
             const labs = Array.from({ length: 10 }, (_, i) => `Lab ${String(i + 1).padStart(2, '0')}`);
             const selectedLab = await vscode.window.showQuickPick(labs, {
@@ -154,7 +154,7 @@ export class GitManager {
             location: vscode.ProgressLocation.Notification,
             title: targetLab 
                 ? `Syncing ${targetLab.toUpperCase()} templates...`
-                : "Syncing entire repository...",
+                : "Syncing course configurations and tooling...",
             cancellable: false
         }, async (progress) => {
             try {
@@ -211,42 +211,27 @@ export class GitManager {
                     vscode.window.showInformationMessage(`Successfully synced ${targetLab.toUpperCase()} templates and course tooling!`);
 
                 } else {
-                    // MODE 2: FULL MERGE (SYNC ENTIRE REPOSITORY)
-                    progress.report({ message: "Backing up all files..." });
-                    const statusOutput = await this.runGitCommand(workspaceDir, 'status --porcelain');
-                    const backup: Map<string, string> = new Map();
-
-                    if (statusOutput) {
-                        const lines = statusOutput.split('\n');
-                        for (const line of lines) {
-                            if (line.length < 4) { continue; }
-                            const relPath = line.slice(3).trim();
-                            if (relPath.match(/^labs\/lab\d{2}\/task\d\/[^\/]+\.v$/)) {
-                                const fullPath = path.join(workspaceDir, relPath);
-                                if (fs.existsSync(fullPath)) {
-                                    backup.set(relPath, fs.readFileSync(fullPath, 'utf8'));
-                                }
-                            }
-                        }
+                    // MODE 2: SYNC COURSE TOOLING (NON-LABS)
+                    progress.report({ message: "Fetching list of non-lab files..." });
+                    
+                    // List all top-level items in upstream branch
+                    const topLevelStr = await this.runGitCommand(workspaceDir, `ls-tree --name-only upstream/${branchName}`);
+                    const topLevelItems = topLevelStr
+                        .split(/\r?\n/)
+                        .map(item => item.trim())
+                        .filter(item => item.length > 0 && item !== 'labs');
+                    
+                    if (topLevelItems.length === 0) {
+                        vscode.window.showWarningMessage('No non-lab files found to sync.');
+                        return;
                     }
-
-                    progress.report({ message: "Cleaning workspace..." });
-                    await this.runGitCommand(workspaceDir, 'reset --hard');
-                    await this.runGitCommand(workspaceDir, 'clean -fd');
-
-                    progress.report({ message: "Merging latest templates..." });
-                    await this.runGitCommand(workspaceDir, `merge upstream/${branchName} -X theirs --allow-unrelated-histories --no-edit`);
-
-                    if (backup.size > 0) {
-                        progress.report({ message: "Restoring your files..." });
-                        for (const [relPath, content] of backup.entries()) {
-                            const fullPath = path.join(workspaceDir, relPath);
-                            fs.mkdirSync(path.dirname(fullPath), { recursive: true });
-                            fs.writeFileSync(fullPath, content, 'utf8');
-                        }
-                    }
-
-                    vscode.window.showInformationMessage('Successfully synced with central template repository with zero conflicts!');
+                    
+                    progress.report({ message: "Checking out non-lab folders and files..." });
+                    // Checkout all non-lab top-level items
+                    const checkoutArgs = `checkout upstream/${branchName} -- ` + topLevelItems.map(item => `"${item}"`).join(' ');
+                    await this.runGitCommand(workspaceDir, checkoutArgs);
+                    
+                    vscode.window.showInformationMessage('Successfully synced course configurations and tooling with zero changes to your labs!');
                 }
             } catch (err: any) {
                 vscode.window.showErrorMessage(`Sync failed: ${err.message || err}`);
