@@ -292,19 +292,16 @@ export class GitManager {
                     
                     // Parse output to find commit view link
                     const urlMatch = stdout.match(/https:\/\/github\.com\/[^\s]+/);
-                    if (urlMatch) {
-                        const url = urlMatch[0];
-                        vscode.window.showInformationMessage(
-                            `Successfully submitted ${labName} ${taskName}! Autograder triggered.`,
-                            'View Submission'
-                        ).then(selection => {
-                            if (selection === 'View Submission') {
-                                vscode.env.openExternal(vscode.Uri.parse(url));
-                            }
-                        });
-                    } else {
-                        vscode.window.showInformationMessage(`Successfully submitted ${labName} ${taskName}! Autograder triggered.`);
-                    }
+                    const actionsUrl = await this.getActionsUrl(workspaceDir, urlMatch ? urlMatch[0] : undefined);
+                    
+                    vscode.window.showInformationMessage(
+                        `file submitted correctly. Result in ${actionsUrl}`,
+                        'Open Actions'
+                    ).then(selection => {
+                        if (selection === 'Open Actions') {
+                            vscode.env.openExternal(vscode.Uri.parse(actionsUrl));
+                        }
+                    });
                 } catch (err: any) {
                     vscode.window.showErrorMessage(`Classroom 50 submission failed: ${err.message || err}`);
                 }
@@ -351,10 +348,37 @@ export class GitManager {
                 const currentBranch = await this.runGitCommand(workspaceDir, 'rev-parse --abbrev-ref HEAD');
                 await this.runGitCommand(workspaceDir, `push origin ${currentBranch}`);
 
-                vscode.window.showInformationMessage(`Successfully submitted ${labName} ${taskName}!`);
+                const actionsUrl = await this.getActionsUrl(workspaceDir);
+                vscode.window.showInformationMessage(
+                    `file submitted correctly. Result in ${actionsUrl}`,
+                    'Open Actions'
+                ).then(selection => {
+                    if (selection === 'Open Actions') {
+                        vscode.env.openExternal(vscode.Uri.parse(actionsUrl));
+                    }
+                });
             } catch (err: any) {
-                vscode.window.showErrorMessage(`Submission failed: ${err.message || err}`);
+                vscode.window.showErrorMessage('Submission failed: ' + (err.message || err));
             }
         });
+    }
+
+    private static async getActionsUrl(workspaceDir: string, fallbackUrl?: string): Promise<string> {
+        if (fallbackUrl) {
+            const match = fallbackUrl.match(/(https:\/\/github\.com\/[^\/]+\/[^\/]+)/);
+            if (match) {
+                return `${match[1]}/actions`;
+            }
+        }
+        try {
+            let remoteUrl = await this.runGitCommand(workspaceDir, 'config --get remote.origin.url');
+            remoteUrl = remoteUrl.trim().replace(/\.git$/, '');
+            if (remoteUrl.startsWith('git@github.com:')) {
+                remoteUrl = remoteUrl.replace('git@github.com:', 'https://github.com/');
+            }
+            return `${remoteUrl}/actions`;
+        } catch {
+            return 'https://github.com';
+        }
     }
 }
