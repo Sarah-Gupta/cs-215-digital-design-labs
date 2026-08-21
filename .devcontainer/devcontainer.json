@@ -14,7 +14,11 @@
       ],
       "settings": {
         "github.copilot.chat.useInstructionFiles": true,
-        "github.copilot.inlineSuggest.enable": true
+        "github.copilot.inlineSuggest.enable": false,
+        "github.copilot.enable": {
+          "*": false
+        },
+        "github.copilot.nextEditSuggestions.enabled": false
       }
     }
   },
