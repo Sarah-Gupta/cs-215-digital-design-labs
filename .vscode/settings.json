@@ -6,6 +6,10 @@
         ".gitattributes": true,
         "LICENSE": true,
         ".vscode": true,
+        ".github": true,
+        ".classroom50.yaml": true,
+        "README.md": true,
+        ".specstory": true,
         "labs/lab*/*.png": true
     },
     "github.copilot.chat.useInstructionFiles": true,
