@@ -19,7 +19,6 @@ ARTEFACT_DIR="artefacts/${LAB}"
 # Sanity checks
 [ -d "$LAB_DIR" ] || { echo "Error: lab not found"; exit 1; }
 [ -d "$TASK_DIR" ] || { echo "Error: task not found"; exit 1; }
-[ -f "$DUT_FILE" ] || { echo "Error: dut.v not found"; exit 1; }
 [ -f "$TB_FILE" ] || { echo "Error: testbench not found: $TB_FILE"; exit 1; }
 
 mkdir -p "$ARTEFACT_DIR"
@@ -37,6 +36,11 @@ for f in "$TASK_DIR"/*.v; do
     fi
   fi
 done
+
+if [ ${#TASK_FILES[@]} -eq 0 ]; then
+  echo "Error: No Verilog design files found in $TASK_DIR"
+  exit 1
+fi
 
 # Collect shared files *only if they exist*
 SHARED_FILES=()
