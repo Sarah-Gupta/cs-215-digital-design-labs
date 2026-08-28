@@ -30,6 +30,38 @@ module tb;
     // Example:
     // a = 1'b0; b = 1'b0; #10;
     // if (y !== 1'b0) $display("Error");
+
+    a = 1'b0;
+    b = 1'b0;
+    #10;
+    if (y !== 1'b0)
+      $display("Error");
+    else
+      $display("Test 1 passed");
+
+    a = 1'b1;
+    b = 1'b0;
+    #10;
+    if (y !== 1'b1)
+      $display("Error");
+    else
+      $display("Test 2 passed");  
+
+    a = 1'b0;
+    b = 1'b1;
+    #10;
+    if (y !== 1'b1)
+      $display("Error");
+    else
+      $display("Test 3 passed");  
+
+    a = 1'b1;
+    b = 1'b1;
+    #10;
+    if (y !== 1'b0)
+      $display("Error");
+    else
+      $display("Test 4 passed");  
     
     $finish;
   end
