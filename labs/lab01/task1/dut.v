@@ -12,3 +12,4 @@ module dut (
   
   assign y = a & b;
 endmodule
+

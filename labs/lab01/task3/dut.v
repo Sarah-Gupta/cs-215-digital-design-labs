@@ -9,4 +9,5 @@ module dut (
   // TODO: Implement NOT gate
   // Hint: Use continuous assignment (assign) with the Boolean NOT operator (~)
   
+  assign y = ~a;
 endmodule

@@ -35,7 +35,7 @@ module tb;
     b = 1'b0;
     #10;
     if(y != 1'b0)
-      $display("Error: 0 and 0 should be 0");
+      $display("Error");
     else
        $display("Test 1 passed");
 
@@ -43,7 +43,7 @@ module tb;
     b = 1'b1;
     #10;
     if(y != 1'b1)
-      $display("Error: 0 and 1 should be 1");
+      $display("Error");
     else
        $display("Test 2 passed");   
     
@@ -51,7 +51,7 @@ module tb;
     b = 1'b0;
     #10;
     if(y != 1'b1)
-      $display("Error: 1 and 0 should be 1");
+      $display("Error");
     else
        $display("Test 3 passed");
 
@@ -59,7 +59,7 @@ module tb;
     b = 1'b1;
     #10;
     if(y != 1'b1)
-      $display("Error: 1 and 1 should be 1");
+      $display("Error");
     else
        $display("Test 4 passed");  
         
